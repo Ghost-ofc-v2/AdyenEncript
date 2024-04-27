@@ -108,25 +108,28 @@ class Encryptor:
     def generate_nonce():
         return urandom(12)
 
-@app.post("/encrypt/")
-async def encrypt_card(card_info: CardInfo):
-    # Accede a los valores de la tarjeta de crédito y otros datos
-    card = card_info.card
-    cvv = card_info.cvv
-    month = card_info.month
-    year = card_info.year
-    public_key = card_info.public_key
-    version = card_info.version
+@app.route("/", methods=["GET", "POST"])
+def encrypt_card():
+    if request.method == "POST":
+        # Obtén los datos del formulario HTML
+        card = request.form["card"]
+        cvv = request.form["cvv"]
+        month = request.form["month"]
+        year = request.form["year"]
+        public_key = request.form["public_key"]
+        version = request.form.get("version", "_0_1_25")
 
-    # Aquí puedes llamar a tu función para cifrar la tarjeta de crédito
-    # Usando la clave pública y la versión proporcionadas
+        # Crea una instancia de tu clase Encryptor
+        encryptor = Encryptor(public_key, version)
 
-    # Simplemente devuelve los datos cifrados como ejemplo
-    return {
-        'card': card,
-        'cvv': cvv,
-        'month': month,
-        'year': year,
-        'public_key': public_key,
-        'version': version
-    }
+        # Llama al método para cifrar la tarjeta de crédito
+        encrypted_data = encryptor.encrypt_card(card, cvv, month, year)
+
+        # Renderiza el resultado usando un template HTML
+        return render_template("result.html", encrypted_data=encrypted_data)
+
+    # Renderiza el formulario HTML si se hace una solicitud GET
+    return render_template("form.html")
+
+if __name__ == "__main__":
+    app.run(debug=True)
